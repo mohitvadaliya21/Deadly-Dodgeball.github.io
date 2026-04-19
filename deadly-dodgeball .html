@@ -1,0 +1,1769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Deadly Dodge Ball — GUCPC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;1,300&family=Barlow+Condensed:ital,wght@0,300;0,400;0,700;1,700&display=swap" rel="stylesheet"/>
+
+<style>
+/* ============================================
+   TOKENS
+============================================ */
+:root {
+  --bg:     #0c0c0c;
+  --bg2:    #111111;
+  --paper:  #f0ece4;
+  --ink:    #0c0c0c;
+  --white:  #f5f2ed;
+  --grey1:  #1a1a1a;
+  --grey2:  #2a2a2a;
+  --grey3:  #444;
+  --grey4:  #888;
+  --grey5:  #bbb;
+  --pop:    #ff2d00;     /* THE one accent color */
+  --pop2:   #ff6640;
+  --border: rgba(255,255,255,0.08);
+  --borderL:rgba(0,0,0,0.1);
+  --ease:   cubic-bezier(.19,1,.22,1);
+}
+
+/* ============================================
+   RESET
+============================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--white);
+  font-family:'Barlow Condensed',sans-serif;
+  overflow-x:hidden;
+  cursor:none;
+  -webkit-font-smoothing:antialiased;
+}
+a{text-decoration:none;color:inherit;}
+button{border:none;background:none;font:inherit;color:inherit;cursor:none;}
+img{display:block;max-width:100%;}
+
+::-webkit-scrollbar{width:2px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--pop);}
+
+/* ============================================
+   CURSOR
+============================================ */
+#cur{
+  position:fixed;z-index:9999;pointer-events:none;
+  width:10px;height:10px;background:var(--pop);border-radius:50%;
+  transform:translate(-50%,-50%);
+  transition:width .3s var(--ease),height .3s var(--ease),border-radius .3s,background .3s;
+  mix-blend-mode:normal;
+}
+#cur.big{width:48px;height:48px;background:rgba(255,45,0,.12);border-radius:4px;}
+#cur-line{
+  position:fixed;z-index:9998;pointer-events:none;
+  width:1px;height:1px;
+  background:transparent;
+  border:1px solid rgba(255,45,0,.4);
+  border-radius:50%;
+  transform:translate(-50%,-50%);
+  transition:left .18s var(--ease),top .18s var(--ease),width .35s var(--ease),height .35s var(--ease),opacity .3s;
+  width:28px;height:28px;
+}
+
+/* ============================================
+   PROGRESS
+============================================ */
+#prog{
+  position:fixed;top:0;left:0;width:0%;height:2px;z-index:9997;
+  background:var(--pop);
+  transition:width .08s linear;
+}
+
+/* ============================================
+   HALFTONE TEXTURE (SVG inline as bg)
+============================================ */
+.halftone{
+  background-image:radial-gradient(circle,rgba(255,255,255,.06) 1px,transparent 1px);
+  background-size:18px 18px;
+}
+.halftone-pop{
+  background-image:radial-gradient(circle,rgba(255,45,0,.15) 1px,transparent 1px);
+  background-size:14px 14px;
+}
+
+/* ============================================
+   GRID OVERLAY — the design framework
+============================================ */
+.grid-overlay{
+  position:absolute;inset:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);
+  background-size:80px 80px;
+}
+.grid-overlay-sm{
+  position:absolute;inset:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px);
+  background-size:20px 20px;
+}
+
+/* ============================================
+   NAV
+============================================ */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:900;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2.5rem;height:56px;
+  border-bottom:1px solid var(--border);
+  background:rgba(12,12,12,.85);
+  backdrop-filter:blur(20px);
+}
+.nav-logo{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.1rem;letter-spacing:.2em;
+  display:flex;align-items:center;gap:.7rem;
+}
+.nav-logo-script{
+  font-family:'Caveat',cursive;font-weight:600;
+  font-size:1.3rem;color:var(--pop);letter-spacing:.02em;
+}
+.nav-links{display:flex;gap:2rem;list-style:none;}
+.nav-links a{
+  font-family:'DM Mono',monospace;font-size:.65rem;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--grey4);
+  transition:color .2s;position:relative;
+}
+.nav-links a::before{
+  content:'//';margin-right:.3rem;color:var(--pop);opacity:0;
+  transition:opacity .2s;
+}
+.nav-links a:hover{color:var(--white);}
+.nav-links a:hover::before{opacity:1;}
+.hamburger{display:none;flex-direction:column;gap:4px;}
+.hamburger span{display:block;width:20px;height:1px;background:var(--white);transition:.3s;}
+
+/* ============================================
+   HERO
+============================================ */
+#hero{
+  min-height:100vh;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:auto auto;
+  position:relative;overflow:hidden;
+  border-bottom:1px solid var(--border);
+}
+.grid-overlay{z-index:0;}
+
+/* left col — big type */
+.hero-left{
+  grid-column:1;grid-row:1/3;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:8rem 0 4rem 2.5rem;
+  border-right:1px solid var(--border);
+  position:relative;z-index:1;
+  order:1;
+}
+
+.hero-tag{
+  font-family:'DM Mono',monospace;font-size:.62rem;
+  letter-spacing:.2em;text-transform:uppercase;
+  color:var(--pop);margin-bottom:1.5rem;
+  display:flex;align-items:center;gap:.6rem;
+  animation:fadeUp .8s var(--ease) both;
+}
+.hero-tag::before{content:'';width:24px;height:1px;background:var(--pop);}
+
+.hero-num{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(7rem,14vw,16rem);
+  line-height:.85;letter-spacing:-.02em;
+  color:rgba(255,255,255,.04);
+  position:absolute;bottom:3rem;left:-1rem;
+  pointer-events:none;user-select:none;
+  animation:fadeUp .8s .05s var(--ease) both;
+}
+
+.hero-h1{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(5rem,9vw,11rem);
+  line-height:.88;letter-spacing:-.01em;
+  animation:fadeUp .8s .1s var(--ease) both;
+}
+.hero-h1 .line-a{display:block;color:var(--white);}
+.hero-h1 .line-b{
+  display:block;
+  background:linear-gradient(90deg,var(--pop) 0%,var(--pop2) 50%,rgba(255,45,0,.4) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-script{
+  font-family:'Caveat',cursive;font-weight:500;
+  font-size:clamp(1.4rem,2.5vw,2.2rem);
+  color:var(--grey4);margin-top:.8rem;
+  animation:fadeUp .8s .18s var(--ease) both;
+  font-style:italic;
+}
+
+.hero-desc{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:clamp(.85rem,1.2vw,1rem);font-weight:300;
+  color:var(--grey4);line-height:1.75;
+  max-width:380px;margin-top:2rem;
+  animation:fadeUp .8s .25s var(--ease) both;
+}
+
+.hero-actions{
+  display:flex;gap:1rem;margin-top:2.5rem;flex-wrap:wrap;
+  animation:fadeUp .8s .32s var(--ease) both;
+}
+.btn-pop{
+  display:inline-flex;align-items:center;gap:.5rem;
+  font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.15em;
+  padding:.65rem 1.8rem;border-radius:0;
+  background:var(--pop);color:#fff;
+  transition:background .2s,transform .2s;
+  clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%);
+}
+.btn-pop:hover{background:#ff4422;transform:translate(-2px,-2px);}
+.btn-ghost2{
+  display:inline-flex;align-items:center;gap:.5rem;
+  font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
+  padding:.65rem 1.4rem;
+  border:1px solid var(--grey2);color:var(--grey4);
+  transition:border-color .2s,color .2s;
+}
+.btn-ghost2:hover{border-color:var(--grey3);color:var(--white);}
+
+/* right col top — rotating ball + decorative */
+.hero-right-top{
+  grid-column:2;grid-row:1;
+  display:flex;align-items:center;justify-content:center;
+  padding:8rem 2.5rem 2rem;
+  position:relative;z-index:1;
+  border-bottom:1px solid var(--border);
+  order:2;
+}
+.hero-ball-wrap{
+  position:relative;width:200px;height:200px;
+  display:flex;align-items:center;justify-content:center;
+}
+/* crosshair */
+.crosshair{
+  position:absolute;inset:-30px;
+  border:1px solid rgba(255,45,0,.2);
+  animation:rotateSlow 20s linear infinite;
+}
+.crosshair::before,.crosshair::after{
+  content:'';position:absolute;background:rgba(255,45,0,.3);
+}
+.crosshair::before{width:1px;height:100%;left:50%;top:0;transform:translateX(-50%);}
+.crosshair::after{height:1px;width:100%;top:50%;left:0;transform:translateY(-50%);}
+.crosshair-corner{
+  position:absolute;width:12px;height:12px;
+  border-color:var(--pop);border-style:solid;
+}
+.cc-tl{top:-1px;left:-1px;border-width:2px 0 0 2px;}
+.cc-tr{top:-1px;right:-1px;border-width:2px 2px 0 0;}
+.cc-bl{bottom:-1px;left:-1px;border-width:0 0 2px 2px;}
+.cc-br{bottom:-1px;right:-1px;border-width:0 2px 2px 0;}
+
+@keyframes rotateSlow{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+.hero-ball{
+  width:140px;height:140px;border-radius:50%;
+  background:
+    radial-gradient(circle at 30% 28%,#ff8888 0%,var(--pop) 40%,#6a0000 100%);
+  box-shadow:
+    0 0 80px rgba(255,45,0,.35),
+    0 30px 60px rgba(0,0,0,.6),
+    inset 0 -8px 20px rgba(0,0,0,.5),
+    inset 3px 3px 10px rgba(255,160,140,.2);
+  animation:ballSpin 10s linear infinite;
+  position:relative;z-index:1;
+}
+/* seam lines on ball */
+.hero-ball::before{
+  content:'';position:absolute;inset:10px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.1);
+  transform:rotate(30deg);
+}
+.hero-ball::after{
+  content:'';position:absolute;inset:20px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.06);
+  transform:rotate(-20deg);
+}
+@keyframes ballSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+
+/* halftone dots decorative cluster */
+.hero-dots{
+  position:absolute;bottom:2rem;right:2rem;
+  width:120px;height:120px;
+  background-image:radial-gradient(circle,rgba(255,45,0,.5) 1.5px,transparent 1.5px);
+  background-size:12px 12px;
+  mask-image:radial-gradient(ellipse at 100% 100%,black 30%,transparent 80%);
+}
+
+/* right col bottom — stats */
+.hero-right-bottom{
+  grid-column:2;grid-row:2;
+  display:grid;grid-template-columns:1fr 1fr;
+  border-top:1px solid var(--border);
+  position:relative;z-index:1;
+  order:3;
+}
+.hero-stat{
+  padding:2rem;
+  border-right:1px solid var(--border);
+  position:relative;overflow:hidden;
+}
+.hero-stat:last-child{border-right:none;}
+.hero-stat:nth-child(3),.hero-stat:nth-child(4){border-top:1px solid var(--border);}
+.hs-n{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:3.5rem;line-height:1;
+  background:linear-gradient(135deg,var(--white),var(--grey4));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hs-n.accent{
+  background:linear-gradient(135deg,var(--pop),var(--pop2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hs-l{
+  font-family:'DM Mono',monospace;font-size:.6rem;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--grey3);margin-top:.3rem;
+}
+.hs-script{
+  font-family:'Caveat',cursive;font-size:.95rem;
+  color:var(--grey3);position:absolute;bottom:.8rem;right:.8rem;
+  transform:rotate(-6deg);
+}
+
+/* diagonal stripe accent */
+.hero-stripe{
+  position:absolute;bottom:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--pop),transparent);
+  z-index:2;
+}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+
+/* ============================================
+   TICKER
+============================================ */
+.ticker-wrap{
+  height:38px;overflow:hidden;border-bottom:1px solid var(--border);
+  background:var(--grey1);display:flex;align-items:center;
+}
+.ticker-inner{
+  display:flex;width:max-content;
+  animation:ticker 30s linear infinite;
+}
+.t-item{
+  font-family:'DM Mono',monospace;font-size:.62rem;
+  letter-spacing:.18em;text-transform:uppercase;
+  color:var(--grey3);white-space:nowrap;padding:0 2rem;
+  display:inline-flex;align-items:center;gap:.8rem;
+}
+.t-sep{color:var(--pop);font-size:.7rem;}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ============================================
+   SECTION BASE
+============================================ */
+section{position:relative;overflow:hidden;}
+.sec-inner{max-width:1200px;margin:0 auto;padding:6rem 2.5rem;}
+
+.sec-label{
+  display:flex;align-items:center;gap:.7rem;
+  font-family:'DM Mono',monospace;font-size:.62rem;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--pop);
+  margin-bottom:1rem;
+}
+.sec-label::before{content:'';width:20px;height:1px;background:var(--pop);}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--border);max-width:60px;}
+
+.sec-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(2.8rem,5vw,5.5rem);
+  line-height:.9;letter-spacing:-.01em;
+  color:var(--white);
+}
+.sec-title em{font-style:normal;color:var(--pop);}
+.sec-hand{
+  font-family:'Caveat',cursive;font-weight:500;
+  font-size:clamp(1.2rem,2vw,1.8rem);
+  color:var(--grey4);display:block;margin-top:.3rem;
+  font-style:italic;
+}
+.sec-sub{
+  font-family:'Barlow Condensed',sans-serif;font-weight:300;
+  font-size:.95rem;color:var(--grey4);line-height:1.8;
+  max-width:480px;margin-top:.8rem;
+}
+
+/* REVEAL */
+.rv{opacity:0;transform:translateY(28px);transition:opacity .9s var(--ease),transform .9s var(--ease);}
+.rv.on{opacity:1;transform:none;}
+.rvl{opacity:0;transform:translateX(-28px);transition:opacity .9s var(--ease),transform .9s var(--ease);}
+.rvl.on{opacity:1;transform:none;}
+.rvr{opacity:0;transform:translateX(28px);transition:opacity .9s var(--ease),transform .9s var(--ease);}
+.rvr.on{opacity:1;transform:none;}
+
+/* ============================================
+   ABOUT
+============================================ */
+#about{background:var(--bg2);border-bottom:1px solid var(--border);}
+
+.about-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:auto auto;
+  gap:0;
+  border:1px solid var(--border);
+  margin-top:3.5rem;
+}
+
+.about-cell{
+  padding:2.5rem;
+  border-right:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  position:relative;overflow:hidden;
+}
+.about-cell:nth-child(even){border-right:none;}
+.about-cell.full{grid-column:1/3;border-right:none;}
+.about-cell.last{border-bottom:none;}
+
+.about-cell-label{
+  font-family:'DM Mono',monospace;font-size:.58rem;
+  letter-spacing:.22em;text-transform:uppercase;
+  color:var(--grey3);margin-bottom:1.2rem;
+  display:flex;align-items:center;gap:.4rem;
+}
+.about-cell-label span{color:var(--pop);}
+
+.about-body{
+  font-family:'Barlow Condensed',sans-serif;font-weight:300;
+  font-size:.95rem;color:var(--grey4);line-height:1.85;
+}
+.about-body strong{color:var(--white);font-weight:400;}
+
+/* the big italic quote */
+.about-quote{
+  font-family:'Caveat',cursive;font-weight:500;
+  font-size:clamp(1.6rem,3vw,2.5rem);
+  color:var(--white);line-height:1.3;
+  font-style:italic;padding:3rem 2.5rem;
+  border-bottom:1px solid var(--border);
+  position:relative;
+}
+.about-quote::before{
+  content:'"';
+  font-family:'Bebas Neue',sans-serif;
+  font-size:8rem;color:var(--pop);
+  position:absolute;top:-1.5rem;left:2rem;opacity:.15;
+  line-height:1;
+}
+.aq-attr{
+  font-family:'DM Mono',monospace;font-size:.6rem;
+  letter-spacing:.2em;text-transform:uppercase;
+  color:var(--grey3);margin-top:1rem;display:block;
+}
+
+/* features list */
+.feat-list{display:flex;flex-direction:column;gap:0;}
+.feat-item{
+  display:flex;align-items:flex-start;gap:1rem;
+  padding:.9rem 0;border-bottom:1px solid var(--border);
+}
+.feat-item:last-child{border-bottom:none;}
+.feat-ico{
+  font-size:.9rem;width:28px;height:28px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--grey2);
+  font-family:'DM Mono',monospace;font-size:.6rem;color:var(--pop);
+}
+.feat-text{font-family:'Barlow Condensed',sans-serif;font-weight:300;font-size:.9rem;color:var(--grey4);line-height:1.5;}
+.feat-text strong{color:var(--white);font-weight:400;}
+
+/* stat strip in grid */
+.stat-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+  border-top:1px solid var(--border);
+}
+.sg-item{
+  padding:1.5rem 2rem;border-right:1px solid var(--border);
+  text-align:left;
+}
+.sg-item:last-child{border-right:none;}
+.sg-n{
+  font-family:'Bebas Neue',sans-serif;font-size:2.8rem;line-height:1;
+  color:var(--white);
+}
+.sg-n.red{color:var(--pop);}
+.sg-l{
+  font-family:'DM Mono',monospace;font-size:.55rem;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--grey3);margin-top:.25rem;
+}
+
+/* halftone accent in about */
+.about-htone{
+  position:absolute;bottom:0;right:0;width:100px;height:100px;
+  background-image:radial-gradient(circle,rgba(255,45,0,.4) 1.5px,transparent 1.5px);
+  background-size:10px 10px;
+  mask-image:radial-gradient(ellipse at 100% 100%,black 30%,transparent 75%);
+  pointer-events:none;
+}
+
+/* ============================================
+   TEAM
+============================================ */
+#team{background:var(--bg);border-bottom:1px solid var(--border);}
+
+.team-layout{
+  display:grid;
+  grid-template-columns:260px 1fr;
+  gap:0;
+  border:1px solid var(--border);
+  margin-top:3.5rem;
+}
+
+.team-sidebar{
+  border-right:1px solid var(--border);
+  padding:2.5rem;
+  position:relative;overflow:hidden;
+}
+.ts-ball{
+  width:60px;height:60px;border-radius:50%;
+  background:radial-gradient(circle at 30% 30%,#ff8080,var(--pop),#5a0000);
+  box-shadow:0 10px 40px rgba(255,45,0,.3);
+  animation:ballSpin 10s linear infinite;
+  margin-bottom:2rem;
+}
+.ts-text{
+  font-family:'Caveat',cursive;font-size:1.4rem;
+  color:var(--grey4);line-height:1.5;font-style:italic;
+}
+.ts-footnote{
+  font-family:'DM Mono',monospace;font-size:.58rem;
+  letter-spacing:.15em;text-transform:uppercase;
+  color:var(--grey3);margin-top:1.5rem;
+  border-top:1px solid var(--border);padding-top:1rem;
+}
+.ts-htone{
+  position:absolute;bottom:0;left:0;right:0;height:80px;
+  background-image:radial-gradient(circle,rgba(255,255,255,.06) 1px,transparent 1px);
+  background-size:10px 10px;
+  mask-image:linear-gradient(to top,black,transparent);
+  pointer-events:none;
+}
+
+.team-cards{
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  gap:0;
+}
+
+.tm-card{
+  padding:2.5rem 2rem;
+  border-right:1px solid var(--border);
+  position:relative;overflow:hidden;
+  transition:background .3s;
+}
+.tm-card:last-child{border-right:none;}
+.tm-card:hover{background:var(--grey1);}
+
+.tm-top{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  margin-bottom:1.5rem;
+}
+.tm-idx{
+  font-family:'Bebas Neue',sans-serif;font-size:4rem;line-height:1;
+  color:rgba(255,255,255,.06);transition:color .3s;
+}
+.tm-card:hover .tm-idx{color:rgba(255,255,255,.1);}
+.tm-ico{
+  width:36px;height:36px;border:1px solid var(--grey2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;flex-shrink:0;
+  transition:border-color .3s;
+}
+.tm-card:hover .tm-ico{border-color:var(--pop);}
+
+.tm-role{
+  font-family:'DM Mono',monospace;font-size:.58rem;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--pop);
+  margin-bottom:.5rem;
+}
+.tm-name{
+  font-family:'Bebas Neue',sans-serif;font-size:1.6rem;
+  letter-spacing:.05em;margin-bottom:.8rem;
+}
+.tm-desc{
+  font-family:'Barlow Condensed',sans-serif;font-weight:300;
+  font-size:.85rem;color:var(--grey4);line-height:1.7;margin-bottom:1.2rem;
+}
+.tm-skills{display:flex;flex-wrap:wrap;gap:.3rem;}
+.tm-skill{
+  font-family:'DM Mono',monospace;font-size:.55rem;
+  letter-spacing:.08em;text-transform:uppercase;
+  padding:.2rem .55rem;border:1px solid var(--grey2);color:var(--grey3);
+  transition:border-color .2s,color .2s;
+}
+.tm-card:hover .tm-skill{border-color:var(--grey2);color:var(--grey4);}
+
+.tm-corner{
+  position:absolute;bottom:1rem;right:1rem;
+  font-family:'Caveat',cursive;font-size:1rem;
+  color:var(--grey3);transform:rotate(-8deg);opacity:.6;
+}
+
+/* ============================================
+   PROCESS
+============================================ */
+#process{background:var(--bg2);border-bottom:1px solid var(--border);}
+
+.process-outer{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0;
+  border:1px solid var(--border);
+  margin-top:3.5rem;
+}
+
+.process-steps{border-right:1px solid var(--border);}
+
+.ps{
+  display:grid;grid-template-columns:80px 1fr;gap:0;
+  border-bottom:1px solid var(--border);
+  transition:background .25s;
+}
+.ps:last-child{border-bottom:none;}
+.ps:hover{background:var(--grey1);}
+.ps-n-col{
+  border-right:1px solid var(--border);
+  padding:2rem 1.5rem;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  gap:.5rem;
+}
+.ps-n{
+  font-family:'Bebas Neue',sans-serif;font-size:2.5rem;line-height:1;
+  color:rgba(255,255,255,.12);
+  transition:color .3s;
+}
+.ps:hover .ps-n{color:var(--pop);}
+.ps-dot{width:6px;height:6px;border-radius:50%;background:var(--grey2);transition:background .3s;}
+.ps:hover .ps-dot{background:var(--pop);}
+
+.ps-body{padding:2rem;}
+.ps-phase{
+  font-family:'DM Mono',monospace;font-size:.58rem;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--pop);margin-bottom:.5rem;
+}
+.ps-title{
+  font-family:'Bebas Neue',sans-serif;font-size:1.6rem;
+  letter-spacing:.05em;margin-bottom:.7rem;
+}
+.ps-desc{
+  font-family:'Barlow Condensed',sans-serif;font-weight:300;
+  font-size:.88rem;color:var(--grey4);line-height:1.8;margin-bottom:1rem;
+}
+.ps-tags{display:flex;flex-wrap:wrap;gap:.3rem;}
+.ps-tag{
+  font-family:'DM Mono',monospace;font-size:.53rem;
+  letter-spacing:.08em;text-transform:uppercase;
+  padding:.2rem .55rem;border:1px solid var(--grey2);color:var(--grey3);
+}
+
+/* right side — large decorative number + annotation */
+.process-deco{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:3rem;position:relative;overflow:hidden;
+  gap:2rem;
+}
+.pd-num{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(6rem,10vw,14rem);
+  line-height:1;
+  background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.02));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  user-select:none;
+  text-align:center;
+  transition:all .5s var(--ease);
+}
+.pd-note{
+  font-family:'Caveat',cursive;font-size:1.3rem;
+  color:var(--grey3);text-align:center;line-height:1.5;
+  font-style:italic;max-width:220px;
+}
+.pd-htone{
+  position:absolute;inset:0;
+  background-image:radial-gradient(circle,rgba(255,255,255,.04) 1px,transparent 1px);
+  background-size:16px 16px;
+  pointer-events:none;
+}
+.pd-line{
+  position:absolute;left:0;top:50%;width:100%;height:1px;
+  background:linear-gradient(90deg,var(--pop),transparent);
+  opacity:.15;
+}
+
+/* ============================================
+   GALLERY
+============================================ */
+#gallery{background:var(--bg);border-bottom:1px solid var(--border);}
+
+.gal-header{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  gap:2rem;margin-bottom:2rem;flex-wrap:wrap;
+}
+.gal-tabs{display:flex;gap:.2rem;}
+.gtab{
+  font-family:'DM Mono',monospace;font-size:.62rem;
+  letter-spacing:.12em;text-transform:uppercase;
+  padding:.45rem 1rem;
+  border:1px solid var(--grey2);color:var(--grey3);
+  transition:all .2s;border-radius:0;
+}
+.gtab.active,.gtab:hover{background:var(--pop);border-color:var(--pop);color:#fff;}
+
+.gal-grid{
+  display:grid;
+  grid-template-columns:repeat(12,1fr);
+  grid-template-rows:220px 180px;
+  gap:1px;background:var(--border);
+  border:1px solid var(--border);
+}
+
+.gi{
+  background:var(--grey1);position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .25s;
+  cursor:none;
+}
+.gi:hover{background:#1c1c1c;}
+.gi.c8{grid-column:span 8;}
+.gi.c4{grid-column:span 4;}
+.gi.c5{grid-column:span 5;}
+.gi.c7{grid-column:span 7;}
+.gi.c6{grid-column:span 6;}
+.gi.c3{grid-column:span 3;}
+
+.gi-bg{
+  position:absolute;inset:0;
+  background-image:radial-gradient(circle,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:12px 12px;
+  pointer-events:none;
+}
+.gi-content{position:relative;z-index:1;text-align:center;padding:1.5rem;}
+.gi-ico{font-size:1.6rem;margin-bottom:.6rem;}
+.gi-lbl{
+  font-family:'DM Mono',monospace;font-size:.6rem;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--grey4);
+  margin-bottom:.3rem;
+}
+.gi-sub{font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:var(--grey3);}
+
+/* video placeholder */
+.gi-vid{background:rgba(255,45,0,.04);}
+.gi-vid .gi-bg{background-image:radial-gradient(circle,rgba(255,45,0,.1) 1px,transparent 1px);background-size:14px 14px;}
+.play-outer{
+  position:relative;width:56px;height:56px;margin:0 auto .8rem;
+}
+.play-ring2{
+  position:absolute;inset:-10px;border-radius:50%;
+  border:1px solid rgba(255,45,0,.3);
+  animation:pulseRing 2s ease-in-out infinite;
+}
+@keyframes pulseRing{0%,100%{transform:scale(1);opacity:.5;}50%{transform:scale(1.2);opacity:.1;}}
+.play-circle{
+  width:56px;height:56px;border-radius:50%;background:var(--pop);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 28px rgba(255,45,0,.45);
+  transition:transform .2s,box-shadow .2s;
+}
+.gi:hover .play-circle{transform:scale(1.08);box-shadow:0 12px 36px rgba(255,45,0,.6);}
+.play-circle svg{width:18px;height:18px;fill:#fff;margin-left:3px;}
+
+.gal-note{
+  margin-top:1rem;padding:.9rem 1.2rem;
+  border:1px solid var(--grey2);
+  display:flex;align-items:center;gap:.8rem;
+  font-family:'DM Mono',monospace;font-size:.6rem;
+  letter-spacing:.1em;color:var(--grey3);text-transform:uppercase;
+}
+.gal-note strong{color:var(--grey5);}
+
+/* ============================================
+   CHALLENGES
+============================================ */
+#challenges{background:var(--bg2);border-bottom:1px solid var(--border);}
+
+.ch-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:1px;background:var(--border);
+  border:1px solid var(--border);
+  margin-top:3.5rem;
+}
+
+.ch{
+  background:var(--bg2);padding:2rem 1.8rem;
+  position:relative;overflow:hidden;
+  transition:background .25s;
+  display:flex;flex-direction:column;
+  min-height:260px;
+}
+.ch:hover{background:var(--grey1);}
+
+.ch-num{
+  font-family:'Bebas Neue',sans-serif;font-size:5rem;line-height:1;
+  color:rgba(255,255,255,.04);
+  position:absolute;bottom:-.8rem;right:.5rem;
+  pointer-events:none;transition:color .3s;
+}
+.ch:hover .ch-num{color:rgba(255,255,255,.08);}
+.ch-ico{
+  font-size:1.2rem;margin-bottom:1rem;
+  width:36px;height:36px;border:1px solid var(--grey2);
+  display:flex;align-items:center;justify-content:center;
+  transition:border-color .3s;
+}
+.ch:hover .ch-ico{border-color:var(--pop);}
+.ch-title{
+  font-family:'Bebas Neue',sans-serif;font-size:1.3rem;
+  letter-spacing:.06em;margin-bottom:.6rem;color:var(--white);
+}
+.ch-desc{
+  font-family:'Barlow Condensed',sans-serif;font-weight:300;
+  font-size:.83rem;color:var(--grey4);line-height:1.75;flex:1;
+}
+.ch-resolved{
+  display:inline-flex;align-items:center;gap:.4rem;
+  margin-top:1.2rem;
+  font-family:'DM Mono',monospace;font-size:.55rem;
+  letter-spacing:.15em;text-transform:uppercase;color:#4ade80;
+}
+.ch-resolved::before{content:'';width:5px;height:5px;border-radius:50%;background:#4ade80;flex-shrink:0;}
+
+/* ============================================
+   LEARNINGS — horizontal scroll style
+============================================ */
+#learnings{background:var(--bg);border-bottom:1px solid var(--border);}
+
+.lrn-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:1px;background:var(--border);
+  border:1px solid var(--border);
+  margin-top:3.5rem;
+}
+.lrn-item{
+  background:var(--bg);padding:2rem 1.8rem;
+  transition:background .25s;
+  border-bottom:1px solid var(--border);
+}
+.lrn-item:nth-child(n+4){border-bottom:none;}
+.lrn-item:hover{background:var(--grey1);}
+.lrn-top{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:1rem;
+}
+.lrn-n{
+  font-family:'Bebas Neue',sans-serif;font-size:2rem;line-height:1;
+  background:linear-gradient(135deg,var(--pop),rgba(255,45,0,.3));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.lrn-icon{
+  font-family:'Caveat',cursive;font-size:.9rem;
+  color:var(--grey3);transform:rotate(-5deg);
+}
+.lrn-title{
+  font-family:'Bebas Neue',sans-serif;font-size:1.2rem;
+  letter-spacing:.06em;margin-bottom:.6rem;
+}
+.lrn-desc{
+  font-family:'Barlow Condensed',sans-serif;font-weight:300;
+  font-size:.83rem;color:var(--grey4);line-height:1.75;
+}
+
+/* ============================================
+   FOOTER
+============================================ */
+footer{
+  background:var(--bg);
+  border-top:1px solid var(--border);
+}
+
+.footer-top{
+  display:grid;grid-template-columns:1fr auto;
+  gap:0;border-bottom:1px solid var(--border);
+  padding:4rem 2.5rem;max-width:1200px;margin:0 auto;
+}
+.ft-brand{}
+.ft-wordmark{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(3rem,6vw,7rem);
+  line-height:.88;letter-spacing:-.01em;
+  background:linear-gradient(135deg,var(--white) 40%,var(--grey4));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:.5rem;
+}
+.ft-script{
+  font-family:'Caveat',cursive;font-size:1.4rem;
+  color:var(--pop);font-style:italic;
+  display:block;margin-bottom:1rem;
+}
+.ft-sub{
+  font-family:'Barlow Condensed',sans-serif;font-weight:300;
+  font-size:.88rem;color:var(--grey4);line-height:1.7;
+  max-width:380px;
+}
+.ft-badge{
+  display:inline-flex;align-items:center;gap:.5rem;
+  margin-top:1.5rem;
+  font-family:'DM Mono',monospace;font-size:.6rem;
+  letter-spacing:.15em;text-transform:uppercase;
+  color:var(--grey3);
+  border:1px solid var(--grey2);padding:.5rem 1rem;
+}
+
+.ft-nav{display:flex;gap:4rem;}
+.ft-nav-group{}
+.ft-nav-title{
+  font-family:'DM Mono',monospace;font-size:.58rem;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--grey3);
+  margin-bottom:1rem;
+}
+.ft-nav-list{list-style:none;display:flex;flex-direction:column;gap:.6rem;}
+.ft-nav-list a{
+  font-family:'Barlow Condensed',sans-serif;font-weight:300;
+  font-size:.9rem;color:var(--grey4);transition:color .2s;
+}
+.ft-nav-list a:hover{color:var(--white);}
+
+.footer-bottom{
+  max-width:1200px;margin:0 auto;
+  padding:1.5rem 2.5rem;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:1rem;
+  font-family:'DM Mono',monospace;font-size:.58rem;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--grey3);
+}
+
+/* pop stripe at very bottom */
+.footer-stripe{
+  height:2px;
+  background:linear-gradient(90deg,var(--pop) 0%,var(--pop2) 30%,transparent 100%);
+}
+
+/* ============================================
+   RESPONSIVE
+============================================ */
+@media(max-width:900px){
+  nav{padding:0 1.2rem;}
+  .nav-links{
+    display:none;position:fixed;inset:0;top:56px;
+    background:rgba(12,12,12,.97);
+    flex-direction:column;align-items:center;justify-content:center;
+    gap:2rem;z-index:800;
+  }
+  .nav-links.open{display:flex;}
+  .hamburger{display:flex;}
+
+  /* Hero: single column, text → ball → stats */
+  #hero{
+    display:flex;flex-direction:column;
+    min-height:100vh;
+  }
+  .hero-left{
+    order:1;
+    grid-column:unset;grid-row:unset;
+    padding:6rem 1.5rem 2.5rem;
+    border-right:none;
+    border-bottom:1px solid var(--border);
+    justify-content:flex-start;
+  }
+  .hero-right-top{
+    order:2;
+    grid-column:unset;grid-row:unset;
+    padding:2.5rem 1.5rem;
+    border-bottom:1px solid var(--border);
+    min-height:220px;
+  }
+  .hero-right-bottom{
+    order:3;
+    grid-column:unset;grid-row:unset;
+    grid-template-columns:1fr 1fr;
+    border-top:none;
+  }
+  /* hide ghost "DB" watermark on mobile — too big */
+  .hero-num{display:none;}
+
+  .about-grid{grid-template-columns:1fr;}
+  .about-cell.full,.about-cell{grid-column:1;border-right:none;}
+  .stat-grid{grid-template-columns:1fr 1fr;}
+  .team-layout{grid-template-columns:1fr;}
+  .team-sidebar{border-right:none;border-bottom:1px solid var(--border);}
+  .team-cards{grid-template-columns:1fr;}
+  .tm-card{border-right:none;border-bottom:1px solid var(--border);}
+  .process-outer{grid-template-columns:1fr;}
+  .process-deco{display:none;}
+  .ch-grid{grid-template-columns:1fr 1fr;}
+  .lrn-grid{grid-template-columns:1fr 1fr;}
+  .gal-grid{grid-template-rows:auto;}
+  .gi.c8,.gi.c4,.gi.c5,.gi.c7,.gi.c6,.gi.c3{grid-column:span 6;}
+  .footer-top{grid-template-columns:1fr;}
+  .ft-nav{flex-wrap:wrap;gap:2rem;}
+  section .sec-inner{padding:4rem 1.2rem;}
+}
+@media(max-width:540px){
+  .hero-left{padding:5.5rem 1.2rem 2rem;}
+  .hero-h1{font-size:clamp(3.5rem,14vw,5rem);}
+  .hero-right-top{padding:2rem 1.2rem;min-height:180px;}
+  .hero-right-bottom{grid-template-columns:1fr 1fr;}
+  .hero-stat{padding:1.2rem 1rem;}
+  .hs-n{font-size:2.5rem;}
+  .ch-grid{grid-template-columns:1fr;}
+  .lrn-grid{grid-template-columns:1fr;}
+  .lrn-item:nth-child(n+4){border-bottom:1px solid var(--border);}
+  .lrn-item:last-child{border-bottom:none;}
+  .stat-grid{grid-template-columns:1fr 1fr;}
+  .gal-grid{grid-template-columns:1fr;grid-template-rows:auto;}
+  .gi.c8,.gi.c4,.gi.c5,.gi.c7,.gi.c6,.gi.c3{grid-column:span 1;}
+}
+</style>
+</head>
+<body>
+
+<div id="prog"></div>
+<div id="cur"></div>
+<div id="cur-line"></div>
+
+<!-- ═══ NAV ═══ -->
+<nav>
+  <div class="nav-logo">
+    <span>Deadly</span>
+    <span class="nav-logo-script">Dodge Ball</span>
+  </div>
+  <ul class="nav-links" id="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#team">Team</a></li>
+    <li><a href="#process">Process</a></li>
+    <li><a href="#gallery">Gallery</a></li>
+    <li><a href="#challenges">Challenges</a></li>
+  </ul>
+  <button class="hamburger" onclick="toggleNav()">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section id="hero">
+  <div class="grid-overlay"></div>
+  <div class="grid-overlay-sm"></div>
+
+  <!-- LEFT -->
+  <div class="hero-left">
+    <div class="hero-num">DB</div>
+
+    <div class="hero-tag">
+      BSc Animation &amp; VFX &nbsp;·&nbsp; Final Year &nbsp;·&nbsp; GUCPC
+    </div>
+
+    <h1 class="hero-h1">
+      <span class="line-a">Deadly</span>
+      <span class="line-b">Dodge Ball</span>
+    </h1>
+    <span class="hero-script">— built from scratch.</span>
+
+    <p class="hero-desc">A high-intensity multiplayer Roblox map game crafted by three students — one environment, one VFX &amp; sound, one developer. Zero templates. All original.</p>
+
+    <div class="hero-actions">
+      <a href="#about" class="btn-pop">Explore Project</a>
+      <a href="#gallery" class="btn-ghost2">View Gallery →</a>
+    </div>
+  </div>
+
+  <!-- RIGHT TOP — ball -->
+  <div class="hero-right-top">
+    <div class="hero-ball-wrap">
+      <div class="crosshair">
+        <div class="crosshair-corner cc-tl"></div>
+        <div class="crosshair-corner cc-tr"></div>
+        <div class="crosshair-corner cc-bl"></div>
+        <div class="crosshair-corner cc-br"></div>
+      </div>
+      <div class="hero-ball"></div>
+    </div>
+    <div class="hero-dots"></div>
+    <div class="hero-stripe"></div>
+  </div>
+
+  <!-- RIGHT BOTTOM — stats grid -->
+  <div class="hero-right-bottom">
+    <div class="hero-stat">
+      <div class="hs-n accent">3</div>
+      <div class="hs-l"> Developers</div>
+      <div class="hs-script">us ✦</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hs-n">01</div>
+      <div class="hs-l">Custom map</div>
+      <div class="hs-script">hand-built</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hs-n">50+</div>
+      <div class="hs-l">Power-Ups</div>
+      <div class="hs-script">chaos mode</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hs-n accent">PvP</div>
+      <div class="hs-l">Multiplayer Live</div>
+      <div class="hs-script">real-time</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TICKER ═══ -->
+<div class="ticker-wrap">
+  <div class="ticker-inner">
+    <span class="t-item">Roblox Studio<span class="t-sep">✦</span></span>
+    <span class="t-item">Multiplayer PvP<span class="t-sep">✦</span></span>
+    <span class="t-item">Lua Scripting<span class="t-sep">✦</span></span>
+    <span class="t-item">Custom VFX<span class="t-sep">✦</span></span>
+    <span class="t-item">Sound Design<span class="t-sep">✦</span></span>
+    <span class="t-item">3D Environment<span class="t-sep">✦</span></span>
+    <span class="t-item">Power-Ups<span class="t-sep">✦</span></span>
+    <span class="t-item">GUCPC 2024<span class="t-sep">✦</span></span>
+    <span class="t-item">BSc Animation &amp; VFX<span class="t-sep">✦</span></span>
+    <span class="t-item">Roblox Studio<span class="t-sep">✦</span></span>
+    <span class="t-item">Multiplayer PvP<span class="t-sep">✦</span></span>
+    <span class="t-item">Lua Scripting<span class="t-sep">✦</span></span>
+    <span class="t-item">Custom VFX<span class="t-sep">✦</span></span>
+    <span class="t-item">Sound Design<span class="t-sep">✦</span></span>
+    <span class="t-item">3D Environment<span class="t-sep">✦</span></span>
+    <span class="t-item">Power-Ups<span class="t-sep">✦</span></span>
+    <span class="t-item">GUCPC 2024<span class="t-sep">✦</span></span>
+    <span class="t-item">BSc Animation &amp; VFX<span class="t-sep">✦</span></span>
+  </div>
+</div>
+
+<!-- ═══ ABOUT ═══ -->
+<section id="about">
+  <div class="sec-inner">
+    <div class="rvl">
+      <div class="sec-label">The Game</div>
+      <h2 class="sec-title">What is it?<span class="sec-hand">a game we built ourselves.</span></h2>
+    </div>
+
+    <!-- big italic quote -->
+    <div class="about-quote rv">
+      "Dodge balls fly. Power-ups drop. Last one standing wins — if the chaos doesn't get you first."
+      <span class="aq-attr">— Deadly Dodge Ball, 2024</span>
+    </div>
+
+    <div class="about-grid rv">
+
+      <!-- Cell 1: overview -->
+      <div class="about-cell">
+        <div class="about-htone"></div>
+        <div class="about-cell-label"><span>01</span> Overview</div>
+        <div class="about-body">
+          <p>Deadly Dodge Ball is a <strong>fast-paced multiplayer map game</strong> built entirely inside Roblox Studio as our final-year project for BSc Animation &amp; VFX at Gujarat University Center For Professional Courses.</p>
+          <br/>
+          <p>Players enter a <strong>custom-designed map</strong> and compete to be the last standing. Power-ups scattered across the map — speed boosts, explosive throws, shields — keep every session unpredictable.</p>
+        </div>
+      </div>
+
+      <!-- Cell 2: features -->
+      <div class="about-cell">
+        <div class="about-cell-label"><span>02</span> Features</div>
+        <div class="feat-list">
+          <div class="feat-item">
+            <div class="feat-ico">01</div>
+            <div class="feat-text"><strong>Real-time multiplayer</strong> synchronisation via Roblox networking</div>
+          </div>
+          <div class="feat-item">
+            <div class="feat-ico">02</div>
+            <div class="feat-text"><strong>Collectible power-ups</strong> — speed, explosive throws, shields</div>
+          </div>
+          <div class="feat-item">
+            <div class="feat-ico">03</div>
+            <div class="feat-text"><strong>Custom-built 3D map</strong> modelled and textured from scratch</div>
+          </div>
+          <div class="feat-item">
+            <div class="feat-ico">04</div>
+            <div class="feat-text"><strong>Hand-crafted VFX</strong> — trails, impacts, power-up auras</div>
+          </div>
+          <div class="feat-item">
+            <div class="feat-ico">05</div>
+            <div class="feat-text"><strong>Original sound design</strong> — SFX, ambient layers, soundtrack</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cell 3: discipline -->
+      <div class="about-cell last">
+        <div class="about-cell-label"><span>03</span> Discipline Split</div>
+        <div class="about-body">
+          <p>The project was divided cleanly across three disciplines with zero overlap — <strong>Environment Art</strong>, <strong>VFX &amp; Sound Design</strong>, and <strong>Game Development</strong>. Each person owned their domain entirely.</p>
+          <br/>
+          <p>As animation students building a <strong>functioning video game</strong>, every technical challenge we solved was a new skill acquired. The result is a complete, deployable product.</p>
+        </div>
+      </div>
+
+      <!-- Cell 4: platform -->
+      <div class="about-cell last">
+        <div class="about-cell-label"><span>04</span> Platform &amp; Tools</div>
+        <div class="feat-list">
+          <div class="feat-item">
+            <div class="feat-ico">▸</div>
+            <div class="feat-text"><strong>Roblox Studio</strong> — primary build &amp; scripting environment</div>
+          </div>
+          <div class="feat-item">
+            <div class="feat-ico">▸</div>
+            <div class="feat-text"><strong>Lua</strong> — game logic, networking, physics</div>
+          </div>
+          <div class="feat-item">
+            <div class="feat-ico">▸</div>
+            <div class="feat-text"><strong>Autodesk Maya</strong> — 3D modelling reference &amp; UV layout</div>
+          </div>
+          <div class="feat-item">
+            <div class="feat-ico">▸</div>
+            <div class="feat-text"><strong>Roblox-Studio</strong> — VFX &amp; Effects</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- stat strip -->
+    <div class="stat-grid rv" style="transition-delay:.15s">
+      <div class="sg-item">
+        <div class="sg-n red">3</div>
+        <div class="sg-l"> Developers </div>
+      </div>
+      <div class="sg-item">
+        <div class="sg-n">01</div>
+        <div class="sg-l">Polished map</div>
+      </div>
+      <div class="sg-item">
+        <div class="sg-n">5</div>
+        <div class="sg-l">Dev Phases</div>
+      </div>
+      <div class="sg-item">
+        <div class="sg-n red">∞</div>
+        <div class="sg-l">Possible Matches</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══ TEAM ═══ -->
+<section id="team">
+  <div class="sec-inner">
+    <div class="rvl">
+      <div class="sec-label">The Team</div>
+      <h2 class="sec-title">Three Developers.<span class="sec-hand">one hell of a game.</span></h2>
+    </div>
+
+    <div class="team-layout rv">
+
+      <div class="team-sidebar">
+        <div class="ts-ball"></div>
+        <div class="ts-text">Each of us owned one pillar of this project — no overlap, maximum focus, full accountability.</div>
+        <div class="ts-footnote">GUCPC · BSc Animation &amp; VFX · Batch 2024</div>
+        <div class="ts-htone"></div>
+      </div>
+
+      <div class="team-cards">
+
+        <div class="tm-card">
+          <div class="tm-top">
+            <div class="tm-idx">Faizan</div>
+            <div class="tm-ico">⌨️</div>
+          </div>
+          <div class="tm-role">Game Desiginer & Project Manager</div>
+          <div class="tm-name">Team Member 1</div>
+          <p class="tm-desc">Built idea, Prototyped gameplay, Improved core loop and satisfying gameplay feedback, Worked on scripting, Game Artworks/Posters, Augment vectors, animation, Dodgeball models, UI and Testing. Made sure gameplay felt fun and intense.</p>
+          <div class="tm-skills">
+           <span class="tm-skill">Lua</span>
+            <span class="tm-skill">Networking</span>
+            <span class="tm-skill">Physics</span>
+            <span class="tm-skill">UI/UX</span>
+          </div>
+          <div class="tm-corner">the brain ✦</div>
+        </div>
+
+        <div class="tm-card">
+          <div class="tm-top">
+            <div class="tm-idx">Ramesh</div>
+            <div class="tm-ico">🌿</div>
+          </div>
+          <div class="tm-role">Environment Artist</div>
+          <div class="tm-name">Team Member 2</div>
+          <p class="tm-desc">Built each map asset and dodgeball model from scratch in Autodesk Maya. Integrated everything into Roblox Studio for development.Enhanced the environment with texturing, lighting, layout, and in-engine detailing.</p>
+          <div class="tm-skills">
+             <span class="tm-skill">3D Modeling</span>
+            <span class="tm-skill">Lighting</span>
+            <span class="tm-skill">Texturing</span>
+            <span class="tm-skill">Level Design</span>
+          </div>
+          <div class="tm-corner">builder ✦</div>
+        </div>
+
+        <div class="tm-card">
+          <div class="tm-top">
+            <div class="tm-idx">Mohit</div>
+            <div class="tm-ico">✨</div>
+          </div>
+          <div class="tm-role">VFX &amp; Sound</div>
+          <div class="tm-name">Team Member 3</div>
+          <p class="tm-desc">Created VFX (hit effects, aura effects, cutscene particles) in Roblox Studio, using toolbox assets and free libraries for sound. Enhanced visuals with refined hand-drawn textures, simulations, and emissions for a more immersive feel.</p>
+          <div class="tm-skills">
+            <span class="tm-skill">Particles</span>
+            <span class="tm-skill">VFX</span>
+            <span class="tm-skill">Sound Design</span>
+            <span class="tm-skill">Mixing</span>
+          </div>
+          <div class="tm-corner">the feels ✦</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PROCESS ═══ -->
+<section id="process">
+  <div class="sec-inner">
+    <div class="rvl">
+      <div class="sec-label">Development</div>
+      <h2 class="sec-title">How we built it.<span class="sec-hand">five phases, zero shortcuts.</span></h2>
+    </div>
+
+    <div class="process-outer rv">
+
+      <div class="process-steps">
+
+        <div class="ps">
+          <div class="ps-n-col">
+            <div class="ps-n">01</div>
+            <div class="ps-dot"></div>
+          </div>
+          <div class="ps-body">
+            <div class="ps-phase">Phase 01 — Concept &amp; Design</div>
+            <div class="ps-title">Defining the Game</div>
+            <p class="ps-desc">Alignment sessions to lock the concept, core loop, and art direction before a single asset was made. Classic dodgeball — then we asked: how do we make it deadly?</p>
+            <div class="ps-tags">
+              <span class="ps-tag">Brainstorming</span>
+              <span class="ps-tag">GDD</span>
+              <span class="ps-tag">Art Direction</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ps">
+          <div class="ps-n-col">
+            <div class="ps-n">02</div>
+            <div class="ps-dot"></div>
+          </div>
+          <div class="ps-body">
+            <div class="ps-phase">Phase 02 — Environment Blockout</div>
+            <div class="ps-title">Building the World</div>
+            <p class="ps-desc">Grey-box blockout of the map to define spatial flow and cover placements. Developer tested physics on it immediately — structure first, aesthetics second.</p>
+            <div class="ps-tags">
+              <span class="ps-tag">Grey-Box</span>
+              <span class="ps-tag">Spatial Design</span>
+              <span class="ps-tag">Iteration</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ps">
+          <div class="ps-n-col">
+            <div class="ps-n">03</div>
+            <div class="ps-dot"></div>
+          </div>
+          <div class="ps-body">
+            <div class="ps-phase">Phase 03 — Core Game Logic</div>
+            <div class="ps-title">Making it Play</div>
+            <p class="ps-desc">Ball throwing, collision, elimination, round flow — all wired via Lua. Multiplayer sync was the hardest challenge: server-client architecture had to be airtight.</p>
+            <div class="ps-tags">
+              <span class="ps-tag">Lua</span>
+              <span class="ps-tag">RemoteEvents</span>
+              <span class="ps-tag">Physics</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ps">
+          <div class="ps-n-col">
+            <div class="ps-n">04</div>
+            <div class="ps-dot"></div>
+          </div>
+          <div class="ps-body">
+            <div class="ps-phase">Phase 04 — VFX, Sound &amp; Polish</div>
+            <div class="ps-title">Adding the Feel</div>
+            <p class="ps-desc">Particle effects, hit impacts, power-up auras layered over a stable game. Final textures, lighting, and a complete audio suite transformed prototype into product.</p>
+            <div class="ps-tags">
+              <span class="ps-tag">Particles</span>
+              <span class="ps-tag">Lighting</span>
+              <span class="ps-tag">SFX</span>
+              <span class="ps-tag">Music</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ps">
+          <div class="ps-n-col">
+            <div class="ps-n">05</div>
+            <div class="ps-dot"></div>
+          </div>
+          <div class="ps-body">
+            <div class="ps-phase">Phase 05 —  &amp; Ship</div>
+            <div class="ps-title">Final Pass</div>
+            <p class="ps-desc">External testers ran multiplayer sessions while Faizan handled final balancing and testing, ensuring stable gameplay. Power-ups were refined, edge cases fixed, and UI polished—focusing on one strong, complete map and shipping it clean.</p>
+            <div class="ps-tags">
+              <span class="ps-tag">Playtesting</span>
+              <span class="ps-tag">Balancing</span>
+              <span class="ps-tag">Final Build</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- deco right -->
+      <div class="process-deco">
+        <div class="pd-htone"></div>
+        <div class="pd-line"></div>
+        <div class="pd-num" id="pd-num">05</div>
+        <div class="pd-note">"Five phases. One game. Zero templates."</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══ GALLERY ═══ -->
+<section id="gallery">
+  <div class="sec-inner">
+    <div class="rvl">
+      <div class="sec-label">Visual Showcase</div>
+      <h2 class="sec-title">Gallery.<span class="sec-hand">process &amp; final product.</span></h2>
+    </div>
+
+    <div class="gal-header rv">
+      <div class="sec-sub">Screenshots, process documentation, and gameplay video. Add your actual media below.</div>
+      <div class="gal-tabs">
+        <button class="gtab active" onclick="filterG('all',this)">All</button>
+        <button class="gtab" onclick="filterG('screen',this)">Screens</button>
+        <button class="gtab" onclick="filterG('process',this)">Process</button>
+        <button class="gtab" onclick="filterG('video',this)">Video</button>
+      </div>
+    </div>
+
+    <div class="gal-grid rv" id="g-grid">
+
+      <div class="gi c8" data-type="screen">
+        <div class="gi-bg"></div>
+        <div class="gi-content">
+          <div class="gi-ico">🏟️</div>
+          <div class="gi-lbl">map — Final Build</div>
+          <div class="gi-sub">Add screenshot here</div>
+        </div>
+      </div>
+
+      <div class="gi c4" data-type="screen">
+        <div class="gi-bg"></div>
+        <div class="gi-content">
+          <div class="gi-ico">⚡</div>
+          <div class="gi-lbl">Power-Up</div>
+          <div class="gi-sub">Add screenshot here</div>
+        </div>
+      </div>
+
+      <div class="gi c5" data-type="process">
+        <div class="gi-bg"></div>
+        <div class="gi-content">
+          <div class="gi-ico">📐</div>
+          <div class="gi-lbl">Grey-Box Blockout</div>
+          <div class="gi-sub">Add process image</div>
+        </div>
+      </div>
+
+      <div class="gi c7" data-type="screen">
+        <div class="gi-bg"></div>
+        <div class="gi-content">
+          <div class="gi-ico">🏐</div>
+          <div class="gi-lbl">Multiplayer Match</div>
+          <div class="gi-sub">Add screenshot here</div>
+        </div>
+      </div>
+
+      <div class="gi c6 gi-vid" data-type="video" style="aspect-ratio:unset;height:180px;">
+        <div class="gi-bg"></div>
+        <div class="gi-content">
+          <div class="play-outer">
+            <div class="play-ring2"></div>
+            <div class="play-circle">
+              <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+            </div>
+          </div>
+          <div class="gi-lbl" style="margin-top:.6rem;">Gameplay Trailer</div>
+          <div class="gi-sub">Add YouTube embed here</div>
+        </div>
+      </div>
+
+      <div class="gi c3" data-type="process">
+        <div class="gi-bg"></div>
+        <div class="gi-content">
+          <div class="gi-ico">✨</div>
+          <div class="gi-lbl">VFX Setup</div>
+          <div class="gi-sub">Add image</div>
+        </div>
+      </div>
+
+      <div class="gi c3" data-type="screen">
+        <div class="gi-bg"></div>
+        <div class="gi-content">
+          <div class="gi-ico">💥</div>
+          <div class="gi-lbl">Hit Impact</div>
+          <div class="gi-sub">Add screenshot</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- <div class="gal-note rv" style="transition-delay:.15s">
+      <span>📁</span>
+      <span><strong>To add media:</strong> Replace placeholder content with &lt;img src="…"&gt; for images or a YouTube iframe for video.</span>
+    </div>
+  </div>
+</section> -->
+
+<!-- ═══ CHALLENGES ═══ -->
+<section id="challenges">
+  <div class="sec-inner">
+    <div class="rvl">
+      <div class="sec-label">Obstacles</div>
+      <h2 class="sec-title">What got hard.<span class="sec-hand">how we got through it.</span></h2>
+    </div>
+
+    <div class="ch-grid">
+
+      <div class="ch rv" style="transition-delay:.04s">
+        <div class="ch-num">01</div>
+        <div class="ch-ico">🌐</div>
+        <div class="ch-title">Multiplayer Sync</div>
+        <p class="ch-desc">Keeping ball physics and player states consistent across all clients in real-time. Roblox's RemoteEvent model required careful server-authoritative design to prevent desyncs.</p>
+        <div class="ch-resolved">Resolved</div>
+      </div>
+
+      <div class="ch rv" style="transition-delay:.09s">
+        <div class="ch-num">02</div>
+        <div class="ch-ico">🎨</div>
+        <div class="ch-title">Art Pipeline for Game Engine</div>
+        <p class="ch-desc">Animation skills didn't directly map to Roblox's constraints. Part counts, draw call limits, and LOD required a new approach to asset creation from the ground up.</p>
+        <div class="ch-resolved">Resolved</div>
+      </div>
+
+      <div class="ch rv" style="transition-delay:.14s">
+        <div class="ch-num">03</div>
+        <div class="ch-ico">⚖️</div>
+        <div class="ch-title">Power-Up Balance</div>
+        <p class="ch-desc">Early builds were wildly unbalanced — speed boosts made one player untouchable. Multiple playtesting rounds with external users led to the final equilibrium.</p>
+        <div class="ch-resolved">Resolved</div>
+      </div>
+
+      <div class="ch rv" style="transition-delay:.19s">
+        <div class="ch-num">04</div>
+        <div class="ch-ico">🔊</div>
+        <div class="ch-title">Sound Without a Studio</div>
+        <p class="ch-desc">Punchy, original SFX on zero budget. Free libraries, creative recording, and meticulous in-engine mixing produced a cohesive audio experience that actually slaps.</p>
+        <div class="ch-resolved">Resolved</div>
+      </div>
+
+      <div class="ch rv" style="transition-delay:.24s">
+        <div class="ch-num">05</div>
+        <div class="ch-ico">🤝</div>
+        <div class="ch-title">Collaborative Workflow</div>
+        <p class="ch-desc">Three people in Roblox Studio simultaneously with no native git. Clear ownership boundaries and communication protocols were the only thing standing between us and chaos.</p>
+        <div class="ch-resolved">Resolved</div>
+      </div>
+
+      <div class="ch rv" style="transition-delay:.29s">
+        <div class="ch-num">06</div>
+        <div class="ch-ico">📏</div>
+        <div class="ch-title">Scope Control</div>
+        <p class="ch-desc">Planned multiple maps and twice as many power-ups. Cutting to one polished map was a deliberate, painful decision — and the right one. Ship one thing well.</p>
+        <div class="ch-resolved">Resolved</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══ LEARNINGS ═══ -->
+<section id="learnings">
+  <div class="sec-inner">
+    <div class="rvl">
+      <div class="sec-label">Takeaways</div>
+      <h2 class="sec-title">What stuck.<span class="sec-hand">lessons we won't forget.</span></h2>
+    </div>
+
+    <div class="lrn-grid">
+
+      <div class="lrn-item rv" style="transition-delay:.04s">
+        <div class="lrn-top"><div class="lrn-n">01</div><div class="lrn-icon">playability first ✦</div></div>
+        <div class="lrn-title">Feel Before Finish</div>
+        <p class="lrn-desc">A game that feels good beats one that looks perfect but isn't fun. Mechanics were validated before aesthetics every single time.</p>
+      </div>
+
+      <div class="lrn-item rv" style="transition-delay:.09s">
+        <div class="lrn-top"><div class="lrn-n">02</div><div class="lrn-icon">talk more ✦</div></div>
+        <div class="lrn-title">Communication is Technical</div>
+        <p class="lrn-desc">Bridging art, audio, and code requires a shared vocabulary. Miscommunication is a bug. Clarity became a team discipline.</p>
+      </div>
+
+      <div class="lrn-item rv" style="transition-delay:.14s">
+        <div class="lrn-top"><div class="lrn-n">03</div><div class="lrn-icon">just ship it ✦</div></div>
+        <div class="lrn-title">Ship and Iterate</div>
+        <p class="lrn-desc">Every rough version taught us something the previous one didn't. Waiting for perfect before sharing is a trap every creator falls into once.</p>
+      </div>
+
+      <div class="lrn-item rv" style="transition-delay:.19s">
+        <div class="lrn-top"><div class="lrn-n">04</div><div class="lrn-icon">juice matters ✦</div></div>
+        <div class="lrn-title">VFX is Feel, Not Decor</div>
+        <p class="lrn-desc">Adding particles and sound to a mechanic transformed how it felt — not just how it looked. Game juice is a design tool.</p>
+      </div>
+
+      <div class="lrn-item rv" style="transition-delay:.24s">
+        <div class="lrn-top"><div class="lrn-n">05</div><div class="lrn-icon">limits = ideas ✦</div></div>
+        <div class="lrn-title">Constraints Breed Creativity</div>
+        <p class="lrn-desc">Roblox's engine limits forced solutions we wouldn't have otherwise found. Every constraint is a creative prompt in disguise.</p>
+      </div>
+
+      <div class="lrn-item rv" style="transition-delay:.29s">
+        <div class="lrn-top"><div class="lrn-n">06</div><div class="lrn-icon">fresh eyes ✦</div></div>
+        <div class="lrn-title">External Testing is Essential</div>
+        <p class="lrn-desc">Players outside the team saw issues invisible to us. Fresh eyes are the most valuable and underused debugging tool in any project.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="footer-top">
+    <div class="ft-brand">
+      <div class="ft-wordmark">Deadly Dodge Ball</div>
+      <span class="ft-script">— built from scratch, with intent.</span>
+      <p class="ft-sub">A final year project for BSc Animation &amp; VFX. One map, three disciplines, one semester of relentless building.</p>
+      <div class="ft-badge">🎓 GUCPC · Gujarat University Center For Professional Courses</div>
+    </div>
+    <div class="ft-nav">
+      <div class="ft-nav-group">
+        <div class="ft-nav-title">Sections</div>
+        <ul class="ft-nav-list">
+          <li><a href="#about">About the Game</a></li>
+          <li><a href="#team">The Team</a></li>
+          <li><a href="#process">Development Process</a></li>
+          <li><a href="#gallery">Gallery</a></li>
+          <li><a href="#challenges">Challenges</a></li>
+          <li><a href="#learnings">Learnings</a></li>
+        </ul>
+      </div>
+      <div class="ft-nav-group">
+        <div class="ft-nav-title">Built With</div>
+        <ul class="ft-nav-list">
+          <li><a href="#">Roblox Studio</a></li>
+          <li><a href="#">Lua Scripting</a></li>
+          <li><a href="#">Custom VFX</a></li>
+          <li><a href="#">Sound Design</a></li>
+          <li><a href="#">3D Environment Art</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Deadly Dodge Ball Team — All rights reserved.</span>
+    <span>BSc Animation &amp; VFX · GUCPC · Gujarat University</span>
+  </div>
+  <div class="footer-stripe"></div>
+</footer>
+
+<!-- ═══ JS ═══ -->
+<script>
+/* cursor */
+const cur = document.getElementById('cur');
+const curL = document.getElementById('cur-line');
+document.addEventListener('mousemove', e => {
+  cur.style.left  = e.clientX + 'px';
+  cur.style.top   = e.clientY + 'px';
+  curL.style.left = e.clientX + 'px';
+  curL.style.top  = e.clientY + 'px';
+});
+document.querySelectorAll('a,button,.gi,.ch,.lrn-item,.tm-card,.ps,.af-item').forEach(el => {
+  el.addEventListener('mouseenter', () => cur.classList.add('big'));
+  el.addEventListener('mouseleave', () => cur.classList.remove('big'));
+});
+
+/* progress */
+window.addEventListener('scroll', () => {
+  const p = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
+  document.getElementById('prog').style.width = p + '%';
+}, { passive: true });
+
+/* reveal */
+const ro = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('on'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.rv,.rvl,.rvr').forEach(el => ro.observe(el));
+
+/* nav */
+function toggleNav() {
+  document.getElementById('nav-links').classList.toggle('open');
+}
+document.querySelectorAll('.nav-links a').forEach(a => {
+  a.addEventListener('click', () => document.getElementById('nav-links').classList.remove('open'));
+});
+
+/* process deco number — update as steps scroll into view */
+const psItems = document.querySelectorAll('.ps');
+const pdNum   = document.getElementById('pd-num');
+if (pdNum) {
+  const po = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const idx = Array.from(psItems).indexOf(e.target) + 1;
+        pdNum.textContent = String(idx).padStart(2,'0');
+      }
+    });
+  }, { threshold: 0.5 });
+  psItems.forEach(s => po.observe(s));
+}
+
+/* gallery filter */
+function filterG(type, btn) {
+  document.querySelectorAll('.gtab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.gi').forEach(item => {
+    item.style.display = (type === 'all' || item.dataset.type === type) ? '' : 'none';
+  });
+}
+
+/* subtle parallax on hero */
+window.addEventListener('scroll', () => {
+  const y = window.scrollY;
+  const ball = document.querySelector('.hero-ball');
+  if (ball) ball.style.transform = `rotate(${y * 0.1}deg) translateY(${y * 0.05}px)`;
+}, { passive: true });
+</script>
+</body>
+</html>
