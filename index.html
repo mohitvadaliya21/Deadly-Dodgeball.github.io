@@ -310,7 +310,7 @@ nav{
 /* right col bottom — stats */
 .hero-right-bottom{
   grid-column:2;grid-row:2;
-  display:grid;grid-template-columns:1fr 1fr;`
+  display:grid;grid-template-columns:1fr 1fr;
   border-top:1px solid var(--border);
   position:relative;z-index:1;
   order:3;
@@ -959,6 +959,86 @@ footer{
 }
 
 /* ============================================
+   LIGHTBOX
+============================================ */
+#lightbox{
+  position:fixed;inset:0;z-index:9990;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;
+  transition:opacity .3s var(--ease);
+}
+#lightbox.open{opacity:1;pointer-events:all;}
+
+#lightbox-backdrop{
+  position:absolute;inset:0;
+  background:rgba(5,5,10,.88);
+  backdrop-filter:blur(14px);
+}
+
+#lightbox-panel{
+  position:relative;z-index:1;
+  /* width capped at 85vw, but shrinks to fit the image's natural width */
+  width:min(85vw,960px);
+  /* NO max-height on the panel — let the image dictate height */
+  background:var(--grey1);
+  border:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  transform:scale(.94) translateY(16px);
+  transition:transform .35s var(--ease);
+  box-shadow:0 40px 100px rgba(0,0,0,.7);
+}
+#lightbox.open #lightbox-panel{transform:scale(1) translateY(0);}
+
+#lightbox-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.7rem 1.2rem;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+#lightbox-label{
+  font-family:'DM Mono',monospace;font-size:.6rem;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--grey4);
+}
+#lightbox-close{
+  width:28px;height:28px;
+  border:1px solid var(--grey2);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--grey4);font-size:.85rem;line-height:1;
+  cursor:none;transition:border-color .2s,color .2s;
+  flex-shrink:0;
+}
+#lightbox-close:hover{border-color:var(--pop);color:var(--white);}
+
+#lightbox-img-wrap{
+  /* shrink-wrap around the image naturally */
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg);
+  line-height:0;
+}
+#lightbox-img-wrap img{
+  /* fill the panel width, height scales naturally — zero cropping */
+  width:100%;
+  height:auto;
+  max-height:82vh;   /* only kicks in on very tall/portrait images */
+  object-fit:contain;
+  display:block;
+}
+
+.gi.has-img{position:relative;}
+.gi-zoom-hint{
+  position:absolute;bottom:.7rem;right:.7rem;z-index:2;
+  font-family:'DM Mono',monospace;font-size:.55rem;
+  letter-spacing:.12em;text-transform:uppercase;
+  color:var(--grey4);border:1px solid var(--grey2);
+  padding:.2rem .55rem;
+  opacity:0;transition:opacity .2s;
+  pointer-events:none;
+  background:rgba(12,12,12,.75);
+}
+.gi.has-img:hover .gi-zoom-hint{opacity:1;}
+
+/* ============================================
    RESPONSIVE
 ============================================ */
 @media(max-width:900px){
@@ -1469,8 +1549,13 @@ footer{
 
     <div class="gal-grid rv" id="g-grid">
 
-       <div class="gi c8" data-type="screen">
-        <img src="https://mohitvadaliya21.github.io/Deadly-Dodgeball.github.io/ss/Arena.png" alt="Arena — Final Build" style="width:100%;height:100%;object-fit:cover;display:block;">
+      <div class="gi c8" data-type="screen">
+        <div class="gi-bg"></div>
+        <div class="gi-content">
+          <div class="gi-ico">🏟️</div>
+          <div class="gi-lbl">map — Final Build</div>
+          <div class="gi-sub">Add screenshot here</div>
+        </div>
       </div>
 
       <div class="gi c4" data-type="screen">
@@ -1759,6 +1844,75 @@ window.addEventListener('scroll', () => {
   const ball = document.querySelector('.hero-ball');
   if (ball) ball.style.transform = `rotate(${y * 0.1}deg) translateY(${y * 0.05}px)`;
 }, { passive: true });
+</script>
+
+<!-- ═══ LIGHTBOX ═══ -->
+<div id="lightbox">
+  <div id="lightbox-backdrop"></div>
+  <div id="lightbox-panel">
+    <div id="lightbox-bar">
+      <span id="lightbox-label">Gallery</span>
+      <button id="lightbox-close" onclick="closeLightbox()">✕</button>
+    </div>
+    <div id="lightbox-img-wrap">
+      <img id="lightbox-img" src="" alt=""/>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── LIGHTBOX ── */
+const lb         = document.getElementById('lightbox');
+const lbImg      = document.getElementById('lightbox-img');
+const lbLabel    = document.getElementById('lightbox-label');
+const lbBackdrop = document.getElementById('lightbox-backdrop');
+
+function openLightbox(src, label) {
+  lbImg.src = src;
+  lbLabel.textContent = label || 'Gallery';
+  lb.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  lb.classList.remove('open');
+  document.body.style.overflow = '';
+  /* slight delay so transition finishes before clearing src */
+  setTimeout(() => { lbImg.src = ''; }, 350);
+}
+
+/* close on backdrop click */
+lbBackdrop.addEventListener('click', closeLightbox);
+
+/* close on Escape key */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeLightbox();
+});
+
+/* attach click to every gallery item that contains an <img> */
+function initLightbox() {
+  document.querySelectorAll('.gi').forEach(gi => {
+    const img = gi.querySelector('img');
+    if (!img) return;
+    gi.classList.add('has-img');
+
+    /* add zoom hint if not already there */
+    if (!gi.querySelector('.gi-zoom-hint')) {
+      const hint = document.createElement('span');
+      hint.className = 'gi-zoom-hint';
+      hint.textContent = 'click to expand';
+      gi.appendChild(hint);
+    }
+
+    gi.addEventListener('click', () => {
+      /* derive label from gi-lbl inside cell, or fall back to alt */
+      const lbl = gi.querySelector('.gi-lbl')?.textContent || img.alt || 'Image';
+      openLightbox(img.src, lbl);
+    });
+  });
+}
+
+initLightbox();
 </script>
 </body>
 </html>
