@@ -17,6 +17,8 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
 body{background:var(--bg);color:var(--white);font-family:'Barlow Condensed',sans-serif;overflow-x:hidden;cursor:none;-webkit-font-smoothing:antialiased;}
+/* force custom cursor everywhere — no element should show default cursor on desktop */
+a,button,input,select,textarea,[role="button"]{cursor:none;}
 a{text-decoration:none;color:inherit;}
 button{border:none;background:none;font:inherit;color:inherit;cursor:none;}
 img{display:block;max-width:100%;}
@@ -35,38 +37,59 @@ img{display:block;max-width:100%;}
 .grid-overlay-sm{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px);background-size:20px 20px;}
 
 /* NAV */
-nav{position:fixed;top:0;left:0;right:0;z-index:900;display:flex;align-items:center;justify-content:space-between;padding:0 2.5rem;height:56px;border-bottom:1px solid var(--border);background:rgba(12,12,12,.95);backdrop-filter:blur(20px);}
-.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.2em;display:flex;align-items:center;gap:.7rem;}
+nav{position:fixed;top:0;left:0;right:0;z-index:900;display:flex;align-items:center;justify-content:space-between;padding:0 2.5rem;height:56px;border-bottom:1px solid var(--border);background:rgba(12,12,12,.95);backdrop-filter:blur(20px);cursor:none;}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.2em;display:flex;align-items:center;gap:.7rem;cursor:none;}
 .nav-logo-script{font-family:'Caveat',cursive;font-weight:600;font-size:1.3rem;color:var(--pop);}
 .nav-links{display:flex;gap:2rem;list-style:none;}
-.nav-links a{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--grey4);transition:color .2s;position:relative;}
+.nav-links a{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--grey4);transition:color .2s;position:relative;cursor:none;}
 .nav-links a::before{content:'//';margin-right:.3rem;color:var(--pop);opacity:0;transition:opacity .2s;}
 .nav-links a:hover{color:var(--white);}
 .nav-links a:hover::before{opacity:1;}
 
 /* HAMBURGER */
-.hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:40px;height:40px;cursor:none;z-index:1001;flex-shrink:0;}
+.hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:40px;height:40px;cursor:none;z-index:9600;flex-shrink:0;position:relative;}
 .hamburger span{display:block;width:22px;height:1.5px;background:var(--white);border-radius:2px;transition:transform .35s var(--ease),opacity .25s,width .25s;transform-origin:center;}
 .hamburger.is-open span:nth-child(1){transform:translateY(6.5px) rotate(45deg);}
 .hamburger.is-open span:nth-child(2){opacity:0;width:0;}
 .hamburger.is-open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg);}
 
-/* MOBILE NAV */
+/* MOBILE NAV — must sit above everything including nav (z:900) */
 #mobile-nav{
-  position:fixed;inset:0;top:56px;z-index:800;
-  background:rgba(10,10,10,.97);
-  backdrop-filter:blur(28px);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2rem;
-  opacity:0;pointer-events:none;
-  transition:opacity .35s var(--ease);
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  z-index:9500;
+  background:#0a0a0a;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.2rem;
+  opacity:0;pointer-events:none;visibility:hidden;
+  transition:opacity .3s ease,visibility .3s ease;
 }
-#mobile-nav.is-open{opacity:1;pointer-events:all;}
-#mobile-nav a{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;letter-spacing:.08em;color:var(--grey5);transition:color .2s;display:block;}
-#mobile-nav a:hover{color:var(--pop);}
+#mobile-nav.is-open{opacity:1;pointer-events:all;visibility:visible;}
+#mobile-nav a{
+  font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:.08em;
+  color:var(--grey5);transition:color .2s;display:block;
+  text-align:center;
+}
+#mobile-nav a:hover,#mobile-nav a:active{color:var(--pop);}
 #mob-backdrop{position:absolute;inset:0;z-index:-1;}
+/* mobile nav top bar — shows logo + close button */
+.mob-nav-bar{
+  position:absolute;top:0;left:0;right:0;height:56px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 1.5rem;
+  border-bottom:1px solid var(--border);
+}
+.mob-nav-logo{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.2em;color:var(--white);}
+.mob-nav-logo span{font-family:'Caveat',cursive;font-size:1.2rem;color:var(--pop);}
+.mob-close-btn{
+  width:36px;height:36px;border:1px solid var(--grey2);
+  display:flex;align-items:center;justify-content:center;
+  cursor:none;transition:border-color .2s;
+}
+.mob-close-btn:hover{border-color:var(--pop);}
+.mob-close-btn svg{width:14px;height:14px;stroke:var(--white);fill:none;stroke-width:2;}
 
-/* HERO */
-#hero{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;position:relative;overflow:hidden;border-bottom:1px solid var(--border);}
+/* HERO — remove overflow:hidden so mobile nav isn't clipped */
+#hero{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;position:relative;border-bottom:1px solid var(--border);}
 .hero-left{grid-column:1;grid-row:1/3;order:1;display:flex;flex-direction:column;justify-content:flex-end;padding:8rem 0 4rem 2.5rem;border-right:1px solid var(--border);position:relative;z-index:1;}
 .hero-tag{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--pop);margin-bottom:1.5rem;display:flex;align-items:center;gap:.6rem;animation:fadeUp .8s var(--ease) both;}
 .hero-tag::before{content:'';width:24px;height:1px;background:var(--pop);}
@@ -235,6 +258,78 @@ section{position:relative;overflow:hidden;}
 
 /* CHALLENGES */
 #challenges{background:var(--bg2);border-bottom:1px solid var(--border);}
+
+/* SHOWCASE — final renders & thumbnails */
+#showcase{background:var(--bg);border-bottom:1px solid var(--border);}
+
+/* Full-width feature image */
+.showcase-hero{
+  border:1px solid var(--border);
+  margin-top:3.5rem;
+  position:relative;overflow:hidden;
+}
+.showcase-hero-img{
+  width:100%;height:420px;
+  background:var(--grey1);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.showcase-hero-img img{width:100%;height:100%;object-fit:cover;display:block;}
+.showcase-hero-label{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:1rem 1.5rem;
+  background:linear-gradient(to top,rgba(0,0,0,.85),transparent);
+  font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--grey5);
+}
+/* placeholder state */
+.img-ph{
+  width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.7rem;
+  background:var(--grey1);position:relative;
+}
+.img-ph::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.025) 1px,transparent 1px);background-size:14px 14px;}
+.img-ph svg{width:28px;height:28px;stroke:var(--grey3);fill:none;stroke-width:1.5;position:relative;z-index:1;}
+.img-ph span{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--grey3);position:relative;z-index:1;}
+
+/* 3-col grid */
+.showcase-grid-3{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:1px;background:var(--border);
+  border:1px solid var(--border);
+  margin-top:1px;
+}
+.sc-item{
+  background:var(--grey1);position:relative;overflow:hidden;
+  aspect-ratio:16/9;cursor:none;
+  transition:background .25s;
+}
+.sc-item:hover{background:#1c1c1c;}
+.sc-item img{width:100%;height:100%;object-fit:cover;display:block;}
+.sc-item .img-ph{aspect-ratio:16/9;}
+.sc-label{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:.6rem 1rem;
+  background:linear-gradient(to top,rgba(0,0,0,.8),transparent);
+  font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:.15em;text-transform:uppercase;color:var(--grey5);
+  opacity:0;transition:opacity .25s;
+}
+.sc-item:hover .sc-label{opacity:1;}
+
+/* 2-col side by side with caption */
+.showcase-2col{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:1px;background:var(--border);
+  border:1px solid var(--border);
+  margin-top:1px;
+}
+.sc2-item{background:var(--grey1);position:relative;overflow:hidden;cursor:none;}
+.sc2-item img{width:100%;height:100%;object-fit:cover;display:block;}
+.sc2-item .img-ph{min-height:280px;}
+.sc2-item:hover .sc-label{opacity:1;}
+
+/* lightbox works on sc-item too */
+.sc-item.has-img,.sc2-item.has-img{position:relative;}
+.sc-zoom{position:absolute;bottom:.6rem;right:.6rem;z-index:2;font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:var(--grey4);border:1px solid var(--grey2);padding:.2rem .5rem;opacity:0;transition:opacity .2s;pointer-events:none;background:rgba(12,12,12,.75);}
+.sc-item:hover .sc-zoom,.sc2-item:hover .sc-zoom{opacity:1;}
 .ch-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-top:3.5rem;}
 .ch{background:var(--bg2);padding:2rem 1.8rem;position:relative;overflow:hidden;transition:background .25s;display:flex;flex-direction:column;min-height:260px;}
 .ch:hover{background:var(--grey1);}
@@ -294,6 +389,10 @@ footer{background:var(--bg);border-top:1px solid var(--border);}
 
 /* RESPONSIVE */
 @media(max-width:900px){
+  /* hide custom cursor on mobile — use default touch cursor */
+  #cur,#cur-line{display:none !important;}
+  body{cursor:auto;}
+  a,button,.gi,.ch,.lrn-item,.tm-card,.ps,.gtab,.sc-item,.sc2-item{cursor:pointer;}
   nav{padding:0 1.2rem;}
   .nav-links{display:none !important;}
   .hamburger{display:flex;}
@@ -315,6 +414,9 @@ footer{background:var(--bg);border-top:1px solid var(--border);}
   .lrn-grid{grid-template-columns:1fr 1fr;}
   .gal-grid{grid-template-rows:auto;}
   .gi.c8,.gi.c4,.gi.c5,.gi.c7,.gi.c6,.gi.c3{grid-column:span 6;}
+  .showcase-grid-3{grid-template-columns:1fr 1fr;}
+  .showcase-2col{grid-template-columns:1fr;}
+  .showcase-hero-img{height:260px;}
   .footer-top{grid-template-columns:1fr;}
   .ft-nav{flex-wrap:wrap;gap:2rem;}
   section .sec-inner{padding:4rem 1.2rem;}
@@ -333,6 +435,7 @@ footer{background:var(--bg);border-top:1px solid var(--border);}
   .stat-grid{grid-template-columns:1fr 1fr;}
   .gal-grid{grid-template-columns:1fr;grid-template-rows:auto;}
   .gi.c8,.gi.c4,.gi.c5,.gi.c7,.gi.c6,.gi.c3{grid-column:span 1;}
+  .showcase-grid-3{grid-template-columns:1fr;}
   #mobile-nav a{font-size:2.2rem;}
 }
 </style>
@@ -354,6 +457,7 @@ footer{background:var(--bg);border-top:1px solid var(--border);}
     <li><a href="#team">Team</a></li>
     <li><a href="#process">Process</a></li>
     <li><a href="#gallery">Gallery</a></li>
+    <li><a href="#showcase">Showcase</a></li>
     <li><a href="#challenges">Challenges</a></li>
   </ul>
   <button class="hamburger" id="hamburger" aria-label="Open menu">
@@ -361,16 +465,23 @@ footer{background:var(--bg);border-top:1px solid var(--border);}
   </button>
 </nav>
 
-<!-- MOBILE NAV OVERLAY -->
-<nav id="mobile-nav" aria-hidden="true">
+<!-- MOBILE NAV OVERLAY — fixed, full-screen, z:9500 -->
+<div id="mobile-nav" aria-hidden="true" role="dialog">
   <div id="mob-backdrop"></div>
+  <div class="mob-nav-bar">
+    <div class="mob-nav-logo">DEADLY <span>Dodge Ball</span></div>
+    <button class="mob-close-btn" id="mob-close-btn" aria-label="Close menu">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
   <a href="#about"      onclick="closeNav()">About</a>
   <a href="#team"       onclick="closeNav()">Team</a>
   <a href="#process"    onclick="closeNav()">Process</a>
   <a href="#gallery"    onclick="closeNav()">Gallery</a>
+  <a href="#showcase"   onclick="closeNav()">Showcase</a>
   <a href="#challenges" onclick="closeNav()">Challenges</a>
   <a href="#learnings"  onclick="closeNav()">Learnings</a>
-</nav>
+</div>
 
 <!-- HERO -->
 <section id="hero">
@@ -756,6 +867,110 @@ footer{background:var(--bg);border-top:1px solid var(--border);}
   </div>
 </section>
 
+<!-- SHOWCASE — Final Product & Renders -->
+<section id="showcase">
+  <div class="sec-inner">
+    <div class="rvl">
+      <div class="sec-label">Final Product</div>
+      <h2 class="sec-title">Renders &amp; Showcase.<span class="sec-hand">the finished game.</span></h2>
+    </div>
+
+    <!-- Hero feature shot — full width -->
+    <div class="showcase-hero rv">
+      <div class="showcase-hero-img">
+        <div class="img-ph">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span>Hero Shot — Arena Final Render</span>
+          <span style="font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.1em;color:var(--grey3);text-transform:uppercase;">Replace with: &lt;img src="your-render.png"&gt;</span>
+        </div>
+      </div>
+      <div class="showcase-hero-label">Arena — Final Render · Roblox Studio</div>
+    </div>
+
+    <!-- 3-col grid — environment renders -->
+    <div class="showcase-grid-3 rv" style="transition-delay:.1s">
+      <div class="sc-item">
+        <div class="img-ph">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          <span>Environment Render 01</span>
+        </div>
+        <div class="sc-label">Environment — Render 01</div>
+        <div class="sc-zoom">click to expand</div>
+      </div>
+      <div class="sc-item">
+        <div class="img-ph">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          <span>Environment Render 02</span>
+        </div>
+        <div class="sc-label">Environment — Render 02</div>
+        <div class="sc-zoom">click to expand</div>
+      </div>
+      <div class="sc-item">
+        <div class="img-ph">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+          <span>Lighting Render</span>
+        </div>
+        <div class="sc-label">Atmosphere &amp; Lighting</div>
+        <div class="sc-zoom">click to expand</div>
+      </div>
+    </div>
+
+    <!-- 2-col — dodgeball model renders -->
+    <div class="showcase-2col rv" style="transition-delay:.2s">
+      <div class="sc2-item">
+        <div class="img-ph" style="min-height:280px">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a15 15 0 0 1 0 20M2 12h20"/><path d="M12 2a15 15 0 0 0 0 20"/></svg>
+          <span>Dodgeball Model — 3D Render</span>
+          <span style="font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.1em;color:var(--grey3);text-transform:uppercase;">Maya render / Roblox export</span>
+        </div>
+        <div class="sc-label">Dodgeball Model — Maya</div>
+        <div class="sc-zoom">click to expand</div>
+      </div>
+      <div class="sc2-item">
+        <div class="img-ph" style="min-height:280px">
+          <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span>VFX — Hit Impact Render</span>
+          <span style="font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.1em;color:var(--grey3);text-transform:uppercase;">Particle effect screenshot</span>
+        </div>
+        <div class="sc-label">VFX — Hit Impact</div>
+        <div class="sc-zoom">click to expand</div>
+      </div>
+    </div>
+
+    <!-- 3-col thumbnails — game thumbnails / poster art / UI screens -->
+    <div class="showcase-grid-3 rv" style="transition-delay:.3s">
+      <div class="sc-item">
+        <div class="img-ph">
+          <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <span>Game Thumbnail / Poster</span>
+        </div>
+        <div class="sc-label">Game Thumbnail</div>
+        <div class="sc-zoom">click to expand</div>
+      </div>
+      <div class="sc-item">
+        <div class="img-ph">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+          <span>UI Screen — In-Game HUD</span>
+        </div>
+        <div class="sc-label">UI — In-Game HUD</div>
+        <div class="sc-zoom">click to expand</div>
+      </div>
+      <div class="sc-item">
+        <div class="img-ph">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>Gameplay — Multiplayer Round</span>
+        </div>
+        <div class="sc-label">Gameplay — Live Round</div>
+        <div class="sc-zoom">click to expand</div>
+      </div>
+    </div>
+
+    <p class="rv" style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--grey3);margin-top:1.2rem;transition-delay:.35s;">
+      To add images: replace each <code style="color:var(--pop)">.img-ph</code> div with <code style="color:var(--pop)">&lt;img src="url"&gt;</code> — images auto-fill and open in the lightbox on click.
+    </p>
+  </div>
+</section>
+
 <!-- CHALLENGES -->
 <section id="challenges">
   <div class="sec-inner">
@@ -907,16 +1122,19 @@ footer{background:var(--bg);border-top:1px solid var(--border);}
 </div>
 
 <script>
-/* CURSOR */
+/* CURSOR — desktop only */
 const cur=document.getElementById('cur'),curL=document.getElementById('cur-line');
-document.addEventListener('mousemove',e=>{
-  cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px';
-  curL.style.left=e.clientX+'px';curL.style.top=e.clientY+'px';
-});
-document.querySelectorAll('a,button,.gi,.ch,.lrn-item,.tm-card,.ps').forEach(el=>{
-  el.addEventListener('mouseenter',()=>cur.classList.add('big'));
-  el.addEventListener('mouseleave',()=>cur.classList.remove('big'));
-});
+const isTouchDevice=()=>window.matchMedia('(max-width:900px)').matches||('ontouchstart' in window);
+if(!isTouchDevice()){
+  document.addEventListener('mousemove',e=>{
+    cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px';
+    curL.style.left=e.clientX+'px';curL.style.top=e.clientY+'px';
+  });
+  document.querySelectorAll('a,button,.gi,.ch,.lrn-item,.tm-card,.ps').forEach(el=>{
+    el.addEventListener('mouseenter',()=>cur.classList.add('big'));
+    el.addEventListener('mouseleave',()=>cur.classList.remove('big'));
+  });
+}
 
 /* PROGRESS */
 window.addEventListener('scroll',()=>{
@@ -934,6 +1152,7 @@ document.querySelectorAll('.rv,.rvl').forEach(el=>ro.observe(el));
 const hamburger=document.getElementById('hamburger');
 const mobileNav=document.getElementById('mobile-nav');
 const mobBackdrop=document.getElementById('mob-backdrop');
+const mobCloseBtn=document.getElementById('mob-close-btn');
 let navOpen=false;
 
 function openNav(){
@@ -956,6 +1175,7 @@ hamburger.addEventListener('click',e=>{
   e.stopPropagation();
   navOpen?closeNav():openNav();
 });
+if(mobCloseBtn) mobCloseBtn.addEventListener('click',closeNav);
 mobBackdrop.addEventListener('click',closeNav);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&navOpen)closeNav();});
 
@@ -1008,6 +1228,7 @@ lbBackdrop.addEventListener('click',closeLightbox);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox();});
 
 function initLightbox(){
+  // Gallery items
   document.querySelectorAll('.gi').forEach(gi=>{
     const img=gi.querySelector('img');
     if(!img)return;
@@ -1020,6 +1241,17 @@ function initLightbox(){
     }
     gi.addEventListener('click',()=>{
       const lbl=gi.querySelector('.gi-lbl')?.textContent||img.alt||'Image';
+      openLightbox(img.src,lbl);
+    });
+  });
+  // Showcase items
+  document.querySelectorAll('.sc-item,.sc2-item').forEach(item=>{
+    const img=item.querySelector('img');
+    if(!img)return;
+    item.classList.add('has-img');
+    item.style.cursor='none';
+    item.addEventListener('click',()=>{
+      const lbl=item.querySelector('.sc-label')?.textContent||img.alt||'Image';
       openLightbox(img.src,lbl);
     });
   });
