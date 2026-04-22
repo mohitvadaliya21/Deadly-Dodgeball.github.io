@@ -152,6 +152,46 @@ section{position:relative;overflow:hidden;}
 .rvl{opacity:0;transform:translateX(-28px);transition:opacity .9s var(--ease),transform .9s var(--ease);}
 .rvl.on{opacity:1;transform:none;}
 
+  /* TRAILER */
+#trailer{background:var(--bg);border-bottom:1px solid var(--border);}
+.trailer-wrap{margin-top:3.5rem;border:1px solid var(--border);position:relative;overflow:hidden;}
+.trailer-topbar{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.5rem;background:var(--grey1);border-bottom:1px solid var(--border);}
+.trailer-topbar-left{display:flex;align-items:center;gap:.9rem;}
+.trailer-dot{width:8px;height:8px;border-radius:50%;background:var(--pop);box-shadow:0 0 10px var(--pop);animation:dotPulse 2s ease-in-out infinite;}
+@keyframes dotPulse{0%,100%{opacity:1;box-shadow:0 0 10px var(--pop);}50%{opacity:.5;box-shadow:0 0 4px var(--pop);}}
+.trailer-tag{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--grey4);}
+.trailer-badge{font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:.15em;text-transform:uppercase;color:var(--pop);border:1px solid rgba(255,45,0,.3);padding:.2rem .6rem;}
+.trailer-embed{position:relative;width:100%;padding-bottom:56.25%;background:#000;overflow:hidden;}
+.trailer-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:none;}
+.trailer-thumb{position:relative;width:100%;padding-bottom:56.25%;background:linear-gradient(135deg,#0a0000 0%,#1a0500 60%,#0c0c0c 100%);overflow:hidden;cursor:none;}
+.trailer-thumb-bg{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,45,0,.12) 1px,transparent 1px);background-size:18px 18px;pointer-events:none;}
+.trailer-thumb-glow{position:absolute;top:50%;left:50%;width:420px;height:420px;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(255,45,0,.18) 0%,transparent 70%);pointer-events:none;animation:glowPulse 3s ease-in-out infinite;}
+@keyframes glowPulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.8;}50%{transform:translate(-50%,-50%) scale(1.15);opacity:.4;}}
+.trailer-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.4rem;z-index:2;}
+.trailer-play-btn{position:relative;width:80px;height:80px;display:flex;align-items:center;justify-content:center;}
+.trailer-play-ring{position:absolute;inset:-12px;border-radius:50%;border:1px solid rgba(255,45,0,.4);animation:playRing 2.5s ease-in-out infinite;}
+.trailer-play-ring2{position:absolute;inset:-24px;border-radius:50%;border:1px solid rgba(255,45,0,.18);animation:playRing 2.5s ease-in-out infinite .5s;}
+@keyframes playRing{0%,100%{transform:scale(1);opacity:.6;}50%{transform:scale(1.1);opacity:.2;}}
+.trailer-play-circle{width:80px;height:80px;border-radius:50%;background:var(--pop);display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(255,45,0,.6),0 12px 40px rgba(0,0,0,.6);transition:transform .25s var(--ease),box-shadow .25s;}
+.trailer-thumb:hover .trailer-play-circle{transform:scale(1.08);box-shadow:0 0 60px rgba(255,45,0,.85),0 16px 50px rgba(0,0,0,.7);}
+.trailer-cta-text{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.12em;color:var(--white);}
+.trailer-cta-sub{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--grey4);margin-top:-.8rem;}
+.trailer-corner-tl{position:absolute;top:1rem;left:1.2rem;font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.12);z-index:3;}
+.trailer-corner-br{position:absolute;bottom:1rem;right:1.2rem;font-family:'Caveat',cursive;font-size:1rem;color:rgba(255,255,255,.15);transform:rotate(-5deg);z-index:3;}
+.trailer-infobar{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--border);background:var(--bg2);}
+.tib-item{padding:1.2rem 1.5rem;border-right:1px solid var(--border);}
+.tib-item:last-child{border-right:none;}
+.tib-label{font-family:'DM Mono',monospace;font-size:.53rem;letter-spacing:.2em;text-transform:uppercase;color:var(--grey3);margin-bottom:.25rem;}
+.tib-val{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.08em;color:var(--white);}
+
+/* WATERMARK */
+#watermark{background:var(--bg);border-top:1px solid var(--border);padding:.6rem 2.5rem;display:flex;align-items:center;justify-content:center;gap:.6rem;position:relative;overflow:hidden;}
+#watermark::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,45,0,.04),transparent);pointer-events:none;}
+.wm-line{width:40px;height:1px;background:var(--grey2);}
+.wm-text{font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.22em;text-transform:uppercase;color:var(--grey3);}
+.wm-name{font-family:'Caveat',cursive;font-size:.95rem;color:var(--pop);font-style:italic;letter-spacing:.04em;}
+.wm-sep{color:var(--grey3);font-size:.6rem;}
+  
 /* ABOUT */
 #about{background:var(--bg2);border-bottom:1px solid var(--border);}
 .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border);margin-top:3.5rem;}
@@ -387,6 +427,35 @@ footer{background:var(--bg);border-top:1px solid var(--border);}
 .gi-zoom-hint{position:absolute;bottom:.7rem;right:.7rem;z-index:2;font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--grey4);border:1px solid var(--grey2);padding:.2rem .55rem;opacity:0;transition:opacity .2s;pointer-events:none;background:rgba(12,12,12,.75);}
 .gi.has-img:hover .gi-zoom-hint{opacity:1;}
 
+/* WATERMARK — fixed bottom right */
+#watermark{
+  position:fixed;
+  bottom:1.2rem;
+  right:1.2rem;
+  z-index:800;
+  display:flex;
+  align-items:center;
+  gap:.4rem;
+  padding:.4rem .8rem;
+  background:rgba(12,12,12,.85);
+  border:1px solid var(--border);
+  backdrop-filter:blur(10px);
+  pointer-events:none;
+}
+.wm-text{
+  font-family:'DM Mono',monospace;
+  font-size:.52rem;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--grey3);
+}
+.wm-name{
+  font-family:'Caveat',cursive;
+  font-size:.95rem;
+  color:var(--pop);
+  font-style:italic;
+}
+  
 /* RESPONSIVE */
 @media(max-width:900px){
   /* hide custom cursor on mobile — use default touch cursor */
@@ -440,6 +509,10 @@ footer{background:var(--bg);border-top:1px solid var(--border);}
 }
 </style>
 </head>
+  <div id="watermark">
+  <span class="wm-text">Webpage by</span>
+  <span class="wm-name">Mohit</span>
+</div>
 <body>
 
 <div id="prog"></div>
@@ -902,6 +975,52 @@ footer{background:var(--bg);border-top:1px solid var(--border);}
   </div>
 </section>
 
+<!-- TRAILER SECTION -->
+<section id="trailer">
+  <div class="sec-inner">
+    <div class="rvl">
+      <div class="sec-label">Official Trailer</div>
+      <h2 class="sec-title">Watch it.<span class="sec-hand">one minute of controlled chaos.</span></h2>
+      <p class="sec-sub">See Deadly Dodge Ball in full swing — balls flying, augments activating, teams clashing.</p>
+    </div>
+
+    <div class="trailer-wrap rv">
+      <div class="trailer-topbar">
+        <div class="trailer-topbar-left">
+          <div class="trailer-dot"></div>
+          <span class="trailer-tag">Official Gameplay Trailer · 2026</span>
+        </div>
+        <span class="trailer-badge">Vimeo</span>
+      </div>
+
+      <!-- Replace YOUR_VIMEO_ID with your actual Vimeo video ID -->
+      <div style="padding:56.25% 0 0 0;position:relative;"><iframe src="https://player.vimeo.com/video/1185613798?badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share" referrerpolicy="strict-origin-when-cross-origin" style="position:absolute;top:0;left:0;width:100%;height:100%;" title="Deadly-Dodgeball Tralier"></iframe></div><script src="https://player.vimeo.com/api/player.js"></script>
+        <div class="trailer-thumb-bg"></div>
+        <div class="trailer-thumb-glow"></div>
+        <span class="trailer-corner-tl">deadly · dodge · ball · 2026</span>
+        <span class="trailer-corner-br">watch the madness ✦</span>
+        <div class="trailer-center">
+          <div class="trailer-play-btn">
+            <div class="trailer-play-ring"></div>
+            <div class="trailer-play-ring2"></div>
+            <div class="trailer-play-circle">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="5,3 19,12 5,21" fill="#fff"/></svg>
+            </div>
+          </div>
+          <div class="trailer-cta-text">Play Trailer</div>
+          <div class="trailer-cta-sub">Opens on Vimeo</div>
+        </div>
+      </div>
+
+      <div class="trailer-infobar">
+        <div class="tib-item"><div class="tib-label">Platform</div><div class="tib-val">Roblox Studio</div></div>
+        <div class="tib-item"><div class="tib-label">Hosted On</div><div class="tib-val">Vimeo</div></div>
+        <div class="tib-item"><div class="tib-label">Produced by</div><div class="tib-val">Faizan · Ramesh · Mohit</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+  
 <!-- CHALLENGES -->
 <section id="challenges">
   <div class="sec-inner">
